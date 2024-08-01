@@ -75,6 +75,11 @@ and run the starter script
 ```sh
 ./docker-compose.sh
 ```
+From Windows machines due to not running in a TTY error, run the starter script
+
+```sh
+./docker-compose-win.sh
+```
 
 > [!NOTE]
 > The docker-compose script uses prebuilt Docker images supporting most of the standard hardware architecture.
