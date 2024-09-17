@@ -14,7 +14,7 @@ export const BACKEND_API_EXPOSED_URL = `${
 
 export const RISK_COLOR_PALETTE: string[] = ['#BBF7D0', '#BEF264', '#FEF08A', '#FBBF24', '#F87171'];
 
-export const complianceResultColorMap = {
+export const complianceResultColorMap: { [key: string]: string } = {
 	not_assessed: '#d1d5db',
 	partially_compliant: '#fde047',
 	non_compliant: '#f87171',
@@ -22,11 +22,26 @@ export const complianceResultColorMap = {
 	compliant: '#86efac'
 };
 
+export const complianceResultTailwindColorMap: { [key: string]: string } = {
+	not_assessed: 'bg-gray-300',
+	partially_compliant: 'bg-yellow-300',
+	non_compliant: 'bg-red-300',
+	not_applicable: 'bg-black text-white',
+	compliant: 'bg-green-300'
+};
+
 export const complianceStatusColorMap = {
 	to_do: '#9ca3af',
 	in_progress: '#f59e0b',
 	in_review: '#3b82f6',
 	done: '#86efac'
+};
+
+export const complianceStatusTailwindColorMap = {
+	to_do: 'bg-gray-400',
+	in_progress: 'bg-amber-500',
+	in_review: 'bg-blue-500',
+	done: 'bg-green-300'
 };
 
 export const MONTH_LIST = [
@@ -60,7 +75,9 @@ export const LOCALE_DISPLAY_MAP = {
 	it: '🇮🇹 Italiano',
 	nl: '🇳🇱 Nederlands',
 	pt: '🇵🇹 Português',
-	pl: '🇵🇱 Polski'
+	pl: '🇵🇱 Polski',
+	ro: '🇷🇴 Română',
+	ar: '🇸🇦 العربية'
 };
 
 export const ISO_8601_REGEX =

@@ -17,6 +17,7 @@ interface ListViewFilterConfig {
 	extraProps?: { [key: string]: any };
 	alwaysDisplay?: boolean;
 	alwaysDefined?: boolean;
+	hide?: boolean;
 }
 
 interface ListViewFieldsConfig {
@@ -140,21 +141,7 @@ const PROVIDER_FILTER_FOR_LIBRARIES: ListViewFilterConfig = {
 
 const THREAT_FILTER: ListViewFilterConfig = {
 	component: SelectFilter,
-	getColumn: (row) => row.meta.threats,
-	filter: (rowThreatName, threatName) => {
-		if (!threatName) return true;
-		return rowThreatName === threatName;
-	},
-	filterProps: (rows, _) => {
-		const threatSet = new Set();
-		for (const row of rows) {
-			for (const threat of row.meta.threats) {
-				threatSet.add(threat.str);
-			}
-		}
-		const options = [...threatSet].sort();
-		return { options };
-	},
+	getColumn: (row) => (row.meta.threats.length ? row.meta.threats.map((t) => t.str) : null),
 	extraProps: {
 		defaultOptionName: 'threat'
 	}
@@ -162,21 +149,7 @@ const THREAT_FILTER: ListViewFilterConfig = {
 
 const ASSET_FILTER: ListViewFilterConfig = {
 	component: SelectFilter,
-	getColumn: (row) => row.meta.assets,
-	filter: (rowAssetName, assetName) => {
-		if (!assetName) return true;
-		return rowAssetName === assetName;
-	},
-	filterProps: (rows, _) => {
-		const assetSet = new Set();
-		for (const row of rows) {
-			for (const asset of row.meta.assets) {
-				assetSet.add(asset.str);
-			}
-		}
-		const options = [...assetSet].sort();
-		return { options };
-	},
+	getColumn: (row) => (row.meta.assets.length ? row.meta.assets.map((t) => t.str) : null),
 	extraProps: {
 		defaultOptionName: 'asset'
 	},
@@ -227,20 +200,31 @@ const CSF_FUNCTION_FILTER: ListViewFilterConfig = {
 	alwaysDisplay: true
 };
 
-/* const HAS_RISK_MATRIX_FILTER: ListViewFilterConfig = {
-	component: CheckboxFilter,
-	getColumn: row => {
-		return !row.meta.overview.some(
-			line => line.startsWith("risk_matrix")
-		); // It would be better to directly have a boolean given by the library data which is set to True when the library has a risk matrix or false otherwise.
-	},
-	filterProps: (rows: any[],field: string) => new Object(),
-	filter: (builtin: boolean, value: boolean): boolean => {
-		return value ? !builtin : true;
+const OWNER_FILTER: ListViewFilterConfig = {
+	component: SelectFilter,
+	getColumn: (row) => {
+		const owner = row?.meta?.owner;
+		return owner && owner.length ? owner.map((o) => o.str) : null;
 	},
 	extraProps: {
-		title: "Only display matrix libraries" // Make translations
-	}
+		defaultOptionName: 'owner'
+	},
+	alwaysDisplay: true
+};
+/* const HAS_RISK_MATRIX_FILTER: ListViewFilterConfig = {
+  component: CheckboxFilter,
+  getColumn: row => {
+    return !row.meta.overview.some(
+      line => line.startsWith("risk_matrix")
+    ); // It would be better to directly have a boolean given by the library data which is set to True when the library has a risk matrix or false otherwise.
+  },
+  filterProps: (rows: any[],field: string) => new Object(),
+  filter: (builtin: boolean, value: boolean): boolean => {
+    return value ? !builtin : true;
+  },
+  extraProps: {
+    title: "Only display matrix libraries" // Make translations
+  }
 }; */
 
 export const listViewFields: ListViewFieldsConfig = {
@@ -310,13 +294,32 @@ export const listViewFields: ListViewFieldsConfig = {
 		}
 	},
 	'applied-controls': {
-		head: ['name', 'description', 'category', 'csfFunction', 'eta', 'domain', 'referenceControl'],
-		body: ['name', 'description', 'category', 'csf_function', 'eta', 'folder', 'reference_control'],
+		head: [
+			'name',
+			'description',
+			'category',
+			'csfFunction',
+			'eta',
+			'owner',
+			'domain',
+			'referenceControl'
+		],
+		body: [
+			'name',
+			'description',
+			'category',
+			'csf_function',
+			'eta',
+			'owner',
+			'folder',
+			'reference_control'
+		],
 		filters: {
 			folder: DOMAIN_FILTER,
 			status: STATUS_FILTER,
 			category: CATEGORY_FILTER,
-			csf_function: CSF_FUNCTION_FILTER
+			csf_function: CSF_FUNCTION_FILTER,
+			owner: OWNER_FILTER
 		}
 	},
 	policies: {
@@ -398,12 +401,12 @@ export const listViewFields: ListViewFieldsConfig = {
 		meta: ['id', 'urn']
 	},
 	libraries: {
-		head: ['ref', 'name', 'description', 'language', 'overview'],
-		body: ['ref_id', 'name', 'description', 'locales', 'overview']
+		head: ['provider', 'name', 'description', 'language', 'overview'],
+		body: ['provider', 'name', 'description', 'locales', 'overview']
 	},
 	'stored-libraries': {
-		head: ['ref', 'name', 'description', 'language', 'overview'],
-		body: ['ref_id', 'name', 'description', 'locales', 'overview'],
+		head: ['provider', 'name', 'description', 'language', 'overview'],
+		body: ['provider', 'name', 'description', 'locales', 'overview'],
 		filters: {
 			locales: LANGUAGE_FILTER,
 			provider: PROVIDER_FILTER_FOR_LIBRARIES
@@ -411,8 +414,8 @@ export const listViewFields: ListViewFieldsConfig = {
 		}
 	},
 	'loaded-libraries': {
-		head: ['ref', 'name', 'description', 'language', 'overview'],
-		body: ['ref_id', 'name', 'description', 'locales', 'overview'],
+		head: ['provider', 'name', 'description', 'language', 'overview'],
+		body: ['provider', 'name', 'description', 'locales', 'overview'],
 		filters: {
 			locales: LANGUAGE_FILTER,
 			provider: PROVIDER_FILTER_FOR_LIBRARIES
@@ -425,5 +428,28 @@ export const listViewFields: ListViewFieldsConfig = {
 	'requirement-mapping-sets': {
 		head: ['sourceFramework', 'targetFramework'],
 		body: ['source_framework', 'target_framework']
+	},
+	entities: {
+		head: ['name', 'description', 'domain', 'ownedFolders'],
+		body: ['name', 'description', 'folder', 'owned_folders'],
+		filters: {
+			folder: DOMAIN_FILTER
+		}
+	},
+	'entity-assessments': {
+		head: ['name', 'description', 'project', 'entity'],
+		body: ['name', 'description', 'project', 'entity'],
+		filters: {
+			project: PROJECT_FILTER,
+			status: STATUS_FILTER
+		}
+	},
+	solutions: {
+		head: ['name', 'description', 'providerEntity', 'recipientEntity', 'criticality'],
+		body: ['name', 'description', 'provider_entity', 'recipient_entity', 'criticality']
+	},
+	representatives: {
+		head: ['email', 'entity', 'role'],
+		body: ['email', 'entity', 'role']
 	}
 };

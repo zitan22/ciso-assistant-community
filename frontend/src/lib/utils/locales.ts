@@ -36,6 +36,16 @@ export const LOCALE_MAP = {
 	pl: {
 		name: 'polish',
 		flag: '🇵🇱'
+	},
+	ro: {
+		name: 'romanian',
+		flag: '🇷🇴'
+	},
+	hi: {
+		name: 'hindi'
+	},
+	ur: {
+		name: 'urdu'
 	}
 };
 
@@ -64,6 +74,7 @@ export function localItems(): LocalItems {
 		dutch: m.dutch(),
 		italian: m.italian(),
 		polish: m.polish(),
+		romanian: m.romanian(),
 		home: m.home(),
 		edit: m.edit(),
 		overview: m.overview(),
@@ -99,6 +110,7 @@ export function localItems(): LocalItems {
 		userGroups: m.userGroups(),
 		roleAssignments: m.roleAssignments(),
 		xRays: m.xRays(),
+		inspect: m.inspect(),
 		scoringAssistant: m.scoringAssistant(),
 		libraries: m.libraries(),
 		backupRestore: m.backupRestore(),
@@ -137,6 +149,7 @@ export function localItems(): LocalItems {
 		builtin: m.builtin(),
 		status: m.status(),
 		effort: m.effort(),
+		cost: m.cost(),
 		impact: m.impact(),
 		expiryDate: m.expiryDate(),
 		link: m.link(),
@@ -384,9 +397,19 @@ export function localItems(): LocalItems {
 		appliedControlNoETA: m.appliedControlNoETA(),
 		appliedControlETAInPast: m.appliedControlETAInPast(),
 		appliedControlNoEffort: m.appliedControlNoEffort(),
+		appliedControlNoCost: m.appliedControlNoCost(),
 		appliedControlNoLink: m.appliedControlNoLink(),
 		riskAcceptanceNoExpiryDate: m.riskAcceptanceNoExpiryDate(),
-		riskAcceptanceExpired: m.riskAcceptanceExpired()
+		riskAcceptanceExpired: m.riskAcceptanceExpired(),
+		thirdParty: m.thirdParty(),
+		financial: m.financial(),
+		legal: m.legal(),
+		reputation: m.reputation(),
+		operational: m.operational(),
+		confidentiality: m.confidentiality(),
+		integrity: m.integrity(),
+		availability: m.availability(),
+		authenticity: m.authenticity()
 	};
 	return LOCAL_ITEMS;
 }

@@ -17,7 +17,10 @@
 		german: m.german(),
 		dutch: m.dutch(),
 		italian: m.italian(),
-		polish: m.polish()
+		polish: m.polish(),
+		romanian: m.romanian(),
+		hindi: m.hindi(),
+		urdu: m.urdu()
 	};
 
 	const modalStore = getModalStore();
@@ -31,7 +34,10 @@
 		nl: 'Nederlands',
 		de: 'Deutsch',
 		it: 'Italiano',
-		pl: 'Polski'
+		pl: 'Polski',
+		ro: 'Română',
+		hi: 'हिंदी',
+		ur: 'اردو'
 	};
 
 	let value = languageTag();

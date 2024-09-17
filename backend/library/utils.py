@@ -89,6 +89,7 @@ class RequirementNodeImporter:
             default_locale=framework_object.default_locale,
             translations=self.requirement_data.get("translations", {}),
             is_published=True,
+            question=self.requirement_data.get("question"),
         )
 
         for threat in self.requirement_data.get("threats", []):
@@ -128,22 +129,17 @@ class RequirementMappingImporter:
                 urn=self.data["target_requirement_urn"], default_locale=True
             )
         except RequirementNode.DoesNotExist:
-            raise Http404(
-                "ERROR: target requirement with URN {} does not exist".format(
-                    self.data["target_requirement"]
-                )
-            )
-
+            err_msg = f"ERROR: target requirement with URN {self.data['target_requirement_urn']} does not exist"
+            print(err_msg)
+            raise Http404(err_msg)
         try:
             source_requirement = RequirementNode.objects.get(
                 urn=self.data["source_requirement_urn"], default_locale=True
             )
         except RequirementNode.DoesNotExist:
-            raise Http404(
-                "ERROR: source requirement with URN {} does not exist".format(
-                    self.data["source_requirement"]
-                )
-            )
+            err_msg = f"ERROR: source requirement with URN {self.data['source_requirement_urn']} does not exist"
+            print(err_msg)
+            raise Http404(err_msg)
         return RequirementMapping.objects.create(
             mapping_set=mapping_set,
             target_requirement=target_requirement,
@@ -581,7 +577,6 @@ class LibraryImporter:
 
     def check_and_import_dependencies(self):
         """Check and import library dependencies."""
-
         if not self._library.dependencies:
             return None
         for dependency_urn in self._library.dependencies:
@@ -660,8 +655,9 @@ class LibraryImporter:
         """Main method to import a library."""
         if (error_message := self.init()) is not None:
             return error_message  # This error check should be done when storing the Library but no after.
-
+        print("::: Getting Dependencies :::")
         error_msg = self.check_and_import_dependencies()
+        print("::: Dependencies are ok :::")
         if error_msg is not None:
             return error_msg
 

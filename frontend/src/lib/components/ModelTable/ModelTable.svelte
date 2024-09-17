@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { safeTranslate } from '$lib/utils/i18n';
 	import { page } from '$app/stores';
 	import TableRowActions from '$lib/components/TableRowActions/TableRowActions.svelte';
 	import {
@@ -7,6 +8,7 @@
 		CUSTOM_ACTIONS_COMPONENT
 	} from '$lib/utils/crud';
 	import { createEventDispatcher, onMount } from 'svelte';
+	import { stringify } from '$lib/utils/helpers';
 
 	import { tableA11y } from './actions';
 	// Types
@@ -91,10 +93,15 @@
 	export let identifierField = 'id';
 	export let deleteForm: SuperValidated<AnyZodObject> | undefined = undefined;
 	export let URLModel: urlModel | undefined = undefined;
-	export let detailQueryParameter: string | undefined;
+	export let detailQueryParameter: string | undefined = undefined;
 	detailQueryParameter = detailQueryParameter ? `?${detailQueryParameter}` : '';
 
 	export let hideFilters = false;
+	$: hideFilters =
+		hideFilters ||
+		!Object.entries(filters).some(([key, filter]) => {
+			if (!filter.hide) return true;
+		});
 
 	const user = $page.data.user;
 
@@ -146,16 +153,22 @@
 		return { options };
 	}
 
-	function defaultFilterFunction(columnValue: any, value: any): boolean {
-		return value ? columnValue === value : true;
+	function defaultFilterFunction(entry: any, value: any[]): boolean {
+		if (!value || value.length < 1) return true;
+		value = value.map((v) => stringify(v));
+		return value.includes(stringify(entry));
 	}
 
 	$: {
 		for (const field of filteredFields) {
 			handler.filter(
-				filterValues[field],
-				filters[field].getColumn ?? field,
-				filters[field].filter ?? defaultFilterFunction
+				filterValues[field] ? filterValues[field].map((v) => v.value) : [],
+				Object.hasOwn(filters, field) && Object.hasOwn(filters[field], 'getColumn')
+					? filters[field].getColumn
+					: field,
+				Object.hasOwn(filters, field) && Object.hasOwn(filters[field], 'filter')
+					? filters[field].filter
+					: defaultFilterFunction
 			);
 		}
 	}
@@ -170,7 +183,18 @@
 	});
 
 	const rows = handler.getRows();
-	let _sessionStorage = null;
+	const _filters = handler.getFilters();
+
+	function getFilterCount(filters: typeof $_filters): number {
+		return Object.values(filters).reduce((acc, filter) => {
+			if (Array.isArray(filter.value) && filter.value.length > 0) {
+				return acc + 1;
+			}
+			return acc;
+		}, 0);
+	}
+
+	$: filterCount = getFilterCount($_filters);
 
 	onMount(() => {
 		if (orderBy) {
@@ -178,24 +202,7 @@
 				? handler.sortAsc(orderBy.identifier)
 				: handler.sortDesc(orderBy.identifier);
 		}
-		_sessionStorage = sessionStorage;
 	});
-
-	let initStorage = true;
-	$: if (_sessionStorage && initStorage) {
-		initStorage = false;
-		const cachedFilterData = JSON.parse(_sessionStorage.getItem('model_table_filter_data') ?? '{}');
-		const restoredCachedFilterData = cachedFilterData[tableURLModel] ?? {};
-		for (const [key, value] of Object.entries(restoredCachedFilterData)) {
-			filterValues[key] = value;
-		}
-	}
-
-	$: if (_sessionStorage && filterValues) {
-		const cachedFilterData = JSON.parse(_sessionStorage.getItem('model_table_filter_data') ?? '{}');
-		cachedFilterData[tableURLModel] = filterValues;
-		_sessionStorage.setItem('model_table_filter_data', JSON.stringify(cachedFilterData));
-	}
 
 	$: field_component_map = FIELD_COMPONENT_MAP[URLModel] ?? {};
 
@@ -230,26 +237,27 @@
 <div class="table-container {classesBase}">
 	<header class="flex justify-between items-center space-x-8 p-2">
 		{#if filteredFields.length > 0 && hasRows && !hideFilters}
-			<button use:popup={popupFilter} class="btn variant-filled-primary self-end">
+			<button use:popup={popupFilter} class="btn variant-filled-primary self-end relative">
 				<i class="fa-solid fa-filter mr-2" />
 				{m.filters()}
+				{#if filterCount}
+					<span class="badge absolute -top-0 -right-0 z-10">{filterCount}</span>
+				{/if}
 			</button>
 			<div
-				class="card whitespace-nowrap bg-white py-2 w-fit shadow-lg space-y-1 border border-slate-200"
+				class="card p-2 bg-white max-w-lg shadow-lg space-y-2 border border-surface-200"
 				data-popup="popupFilter"
 			>
-				<div class="grid grid-cols-3 gap-3 items-center justify-center space-x-4 p-2">
-					{#each filteredFields as field}
-						<svelte:component
-							this={filters[field].component}
-							bind:value={filterValues[field]}
-							alwaysDefined={filters[field].alwaysDefined}
-							{field}
-							{...filterProps[field]}
-							{...filters[field].extraProps}
-						/>
-					{/each}
-				</div>
+				{#each filteredFields as field}
+					<svelte:component
+						this={filters[field].component}
+						bind:value={filterValues[field]}
+						bind:hide={filters[field].hide}
+						{field}
+						{...filterProps[field]}
+						{...filters[field].extraProps}
+					/>
+				{/each}
 			</div>
 		{/if}
 		{#if search}
@@ -274,7 +282,7 @@
 		<thead class="table-head {regionHead}">
 			<tr>
 				{#each Object.entries(source.head) as [key, heading]}
-					<Th {handler} orderBy={key} class="{regionHeadCell}">{m[heading]() ?? heading}</Th>
+					<Th {handler} orderBy={key} class="{regionHeadCell}">{safeTranslate(heading) ?? heading}</Th>
 				{/each}
         {#if displayActions}
         <th class="{regionHeadCell} select-none text-end"></th>
@@ -319,17 +327,13 @@
 									{#if tagData && tags}
 										{@const {text, cssClasses} = tagData}
 										<span class={cssClasses}>
-                    {#if Object.hasOwn(m, text)}
-                      {m[text]()}
-                    {:else}
-                      {text}
-                    {/if}
+                      {safeTranslate(text)}
 										</span>
 									{/if}
 								{/each}
 							{/if}
 							{#if component}
-								<svelte:component this={component} meta={row.meta ?? {}} cell={value}/>
+								<svelte:component this={component} meta={meta} cell={value}/>
 							{:else}
                 <span class="font-token whitespace-pre-line break-words">
                 {#if Array.isArray(value)}
@@ -343,8 +347,8 @@
                             )?.urlModel
                           }/${val.id}`}
                           <a href={itemHref} class="anchor" on:click={e => e.stopPropagation()}>{val.str}</a>
-                        {:else if m[toCamelCase(val.split(':')[0])]()}
-                        	<span class="text">{m[toCamelCase(val.split(':')[0]+"Colon")]()} {val.split(':')[1]}</span>
+                        {:else if safeTranslate(val.split(':')[0])}
+                        	<span class="text">{safeTranslate(val.split(':')[0]+"Colon")} {val.split(':')[1]}</span>
 						{:else}
 						  {val ?? '-'}
                         {/if}
